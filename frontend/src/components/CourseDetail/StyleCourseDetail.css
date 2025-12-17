@@ -1,0 +1,124 @@
+/* --- Общая Стилизация Layout --- */
+
+/* Используем app-layout из HomePage/StyleHomePage.css */
+
+.course-content-area {
+    flex-grow: 1;
+    padding: 20px 40px;
+    max-width: 900px;
+    margin: 0 auto; /* Центрирование контента, если окно шире 900px */
+}
+
+/* Ссылка назад */
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #333;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: #000;
+}
+
+/* Заголовки */
+.course-title {
+    font-size: 2.5em;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.course-description {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+/* --- Прогресс-бар --- */
+.course-progress-bar-wrapper {
+    background-color: #eee;
+    border-radius: 4px;
+    height: 10px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.course-progress-bar {
+    height: 100%;
+    background-color: #333; /* Монохромный прогресс */
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-size: 0.9em;
+    color: #333;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+/* --- Список Уроков --- */
+.lessons-list h2 {
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    color: #000;
+    font-size: 1.8em;
+}
+
+.lesson-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.lesson-item:hover {
+    background-color: #f5f5f5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.lesson-number {
+    font-weight: bold;
+    margin-right: 15px;
+    color: #666;
+    font-size: 1.1em;
+}
+
+.lesson-title {
+    flex-grow: 1;
+    color: #333;
+    font-weight: 500;
+    font-size: 1.1em;
+}
+
+.lesson-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 0.9em;
+}
+
+.lesson-task-count {
+    color: #999;
+}
+
+.lesson-status {
+    font-weight: bold;
+    min-width: 60px;
+    text-align: right;
+}
+
+.lesson-status.completed {
+    color: #008000; /* Зеленый для завершенных */
+}
+
+.lesson-status.pending {
+    color: #333; /* Темный цвет для "Начать" */
+}

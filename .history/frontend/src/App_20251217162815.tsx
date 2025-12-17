@@ -14,18 +14,15 @@ function App() {
   }, []);
 
   return (
-    // <div>
-    //   <h1>Users:</h1>
-    //   {users.map(u => (
-    //     <div key={u.id}>{u.name}</div>
-    //   ))}
-    // </div>
-
-  <Routes>
-    <Route path="/" element={<HomePage />} />
-    <Route path="/login" element={<LogPage />} />
-    <Route path="/register" element={<RegPage />} />
-  </Routes>
+    <>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LogPage />} />
+        <Route path="/register" element={<RegPage />} />
+      </Routes>
+    </BrowserRouter>
+    </>
   );
 }
 

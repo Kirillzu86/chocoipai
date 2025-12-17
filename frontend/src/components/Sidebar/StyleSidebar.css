@@ -1,0 +1,68 @@
+.sidebar-container {
+    width: 250px;
+    padding: 10px 0;
+    font-family: Arial, sans-serif;
+    background-color: #fff; 
+    border-right: 1px solid #ccc;
+    min-height: 100vh; 
+    position: sticky;
+    top: 0;
+    flex-shrink: 0; 
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    font-size: 0.95em;
+    color: #333; 
+    transition: background-color 0.2s;
+    font-weight: 500;
+    text-decoration: none; /* Убираем подчеркивание */
+}
+
+.nav-item:hover {
+    background-color: #f0f0f0;
+}
+
+/* Стилизация активного/специального пункта */
+.nav-item-special {
+    font-weight: bold;
+    color: #000;
+}
+
+.nav-icon {
+    margin-right: 15px;
+    font-size: 1.2em;
+}
+
+.nav-separator {
+    height: 1px;
+    background-color: #eee;
+    margin: 10px 0;
+}
+
+.sidebar-footer {
+    padding: 10px 20px;
+    font-size: 0.85em;
+    color: #666;
+    cursor: pointer;
+}
+
+.sidebar-auth-links {
+    padding: 10px 20px;
+    margin-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.auth-link {
+    display: block;
+    text-decoration: none;
+    color: #333;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.auth-link:hover {
+    color: #000;
+}

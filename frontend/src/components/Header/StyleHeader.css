@@ -1,0 +1,121 @@
+/* frontend/src/components/Header/StyleHeader.css */
+
+.main-header-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 40px; 
+    background-color: #fff; /* Белый фон */
+    border-bottom: 1px solid #ccc; /* Тонкая серая линия */
+    position: sticky;
+    top: 0;
+    z-index: 100; /* Чтобы хедер всегда был сверху */
+}
+
+/* --- Навигация (Левая часть) --- */
+.header-nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.nav-logo {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #000;
+    margin-right: 15px;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    padding: 5px 0;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #000;
+}
+
+.nav-link-active {
+    color: #000;
+    border-bottom: 2px solid #000;
+}
+
+
+/* --- Элементы управления (Правая часть) --- */
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Поиск */
+.search-bar {
+    display: flex;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    overflow: hidden;
+    background-color: #f9f9f9;
+}
+
+.search-input {
+    border: none;
+    padding: 8px 10px;
+    font-size: 0.9em;
+    width: 200px;
+    background-color: transparent;
+}
+
+.search-input:focus {
+    outline: none;
+    background-color: #fff;
+}
+
+.search-button {
+    background-color: #ddd;
+    border: none;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-button:hover {
+    background-color: #ccc;
+}
+
+/* Уведомления */
+.notification-icon {
+    position: relative;
+    font-size: 1.2em;
+    cursor: pointer;
+    color: #333;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #000; /* Чёрный бейдж */
+    color: white;
+    border-radius: 50%;
+    padding: 2px 5px;
+    font-size: 0.65em;
+    line-height: 1;
+}
+
+/* Аватар */
+.user-avatar-container {
+    height: 35px;
+    width: 35px;
+    background-color: #333; /* Тёмный фон */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #fff;
+    cursor: pointer;
+    font-size: 1.1em;
+}

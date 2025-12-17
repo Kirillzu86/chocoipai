@@ -1,0 +1,177 @@
+/* frontend/src/components/HomePage/StyleHomePage.css */
+
+/* --- 1. Общий Макет (Layout) --- */
+
+.app-main-view {
+    background-color: #f9f9f9; 
+    min-height: 100vh; /* Минимальная высота, чтобы фон заполнял страницу */
+}
+
+/* Контейнер для Sidebar + Content Area */
+.app-layout {
+    display: flex; 
+}
+
+.content-area {
+    flex-grow: 1; 
+    padding: 20px 40px; 
+    max-width: 1200px; /* Ограничиваем ширину контента */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.main-title {
+    font-size: 2em;
+    color: #333;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+/* --- 2. Секция Dashboard --- */
+.dashboard-section {
+    display: flex;
+    gap: 30px;
+}
+
+.course-list {
+    flex: 3; /* Курсы занимают большую часть ширины */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* --- 3. Карточка Курса --- */
+.course-card {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    text-decoration: none; /* Убираем подчеркивание у ссылки */
+    color: inherit; /* Наследуем цвет текста */
+    transition: box-shadow 0.2s;
+}
+
+.course-card:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.card-title {
+    font-size: 1.4em;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.card-description {
+    color: #666;
+    font-size: 0.9em;
+    margin-bottom: 15px;
+}
+
+.card-meta {
+    font-size: 0.8em;
+    color: #999;
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.price-status {
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+}
+
+.price-status.free {
+    color: #008000; /* Зеленый для Free */
+    background-color: #e6ffe6;
+}
+
+.price-status.paid {
+    color: #333; /* Черный для Paid */
+    background-color: #ccc;
+}
+
+/* --- 4. Прогресс-бар --- */
+.card-progress {
+    background-color: #eee;
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 5px;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #000; /* Монохромный прогресс */
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-size: 0.8em;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* --- 5. Блок Серии/Цели (Streak Box) --- */
+.streak-box {
+    flex: 1; /* Занимает оставшуюся ширину */
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border: 1px solid #eee;
+    height: fit-content; /* Ограничивает высоту по содержимому */
+    min-width: 250px;
+}
+
+.streak-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.streak-icon {
+    font-size: 1.2em;
+    margin-right: 10px;
+}
+
+.streak-title {
+    font-weight: bold;
+    color: #000;
+}
+
+.streak-days {
+    font-size: 0.8em;
+    color: #999;
+    margin-bottom: 15px;
+}
+
+.daily-goal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.goal-status {
+    font-size: 0.9em;
+    color: #333;
+}
+
+.start-button {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.start-button:hover {
+    background-color: #333;
+}
