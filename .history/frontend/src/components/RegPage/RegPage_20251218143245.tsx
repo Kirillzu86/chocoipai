@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent, type SVGProps, type FC } from "react";
+import { useState, type ChangeEvent, type FormEvent, type SVGProps } from "react";
 import "./StyleRegPage.css";
 
 type IconProps = SVGProps<SVGSVGElement>;
@@ -64,7 +64,7 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
         setMessage({ text: '', type: '' });
     };
 
-    const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const { username, email, password, confirmPassword } = formData;
         if (!username || !email || !password || !confirmPassword) {
@@ -79,28 +79,10 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
             setMessage({ text: 'Пароли не совпадают', type: 'error' });
             return;
         }
-        try {
-            const res = await fetch("http://localhost:8000/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, email, password }),
-            });
-
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.detail || "Не удалось создать аккаунт");
-            }
-
-            const user = await res.json();
-            // сохраняем текущего пользователя в localStorage
-            window.localStorage.setItem("currentUser", JSON.stringify(user));
-            setMessage({ text: `Аккаунт успешно создан для ${user.username}!`, type: 'success' });
-        } catch (err: any) {
-            setMessage({ text: err.message || 'Ошибка при регистрации', type: 'error' });
-        }
+        setMessage({ text: `Аккаунт успешно создан для ${username}!`, type: 'success' });
     };
 
-    const renderInputField = (label: string, type: string, name: keyof typeof formData, Icon: FC<IconProps>, isPass = false, visible = false, toggle = () => {}) => {
+    const renderInputField = (label: string, type: string, name: keyof typeof formData, Icon: (props: IconProps) => JSX.Element, isPass = false, visible = false, toggle = () => {}) => {
         const hasError = errors[name];
         return (
             <div className="input-group">

@@ -56,25 +56,14 @@ body[data-theme="dark"] .main-title {
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Цвета по умолчанию для светлой темы */
-    background-color: #111827;
-    color: #f9fafb;
+    background-color: #000;
+    color: #fff;
     transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .theme-toggle-btn:hover {
-    background-color: #020617;
+    background-color: #333;
     transform: translateY(-1px);
-}
-
-/* В тёмной теме делаем кнопку светлой, как на RegPage/LogPage */
-body[data-theme="dark"] .theme-toggle-btn {
-    background-color: #e5e7eb;
-    color: #020617;
-}
-
-body[data-theme="dark"] .theme-toggle-btn:hover {
-    background-color: #ffffff;
 }
 
 /* --- 2. Секция Dashboard --- */
@@ -88,24 +77,6 @@ body[data-theme="dark"] .theme-toggle-btn:hover {
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
-
-.welcome-banner {
-    padding: 14px 18px;
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(148, 163, 184, 0.4);
-    font-size: 0.95rem;
-    margin-bottom: 12px;
-}
-
-.welcome-name {
-    font-weight: 600;
-}
-
-body[data-theme="dark"] .welcome-banner {
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(148, 163, 184, 0.4);
 }
 
 /* --- 3. Карточка Курса --- */
@@ -208,10 +179,6 @@ body[data-theme="dark"] .welcome-banner {
 .streak-title {
     font-weight: bold;
     color: #000;
-}
-
-body[data-theme="dark"] .streak-title {
-    color: #f9fafb;
 }
 
 .streak-days {

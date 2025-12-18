@@ -7,6 +7,10 @@ const navItems = [
     { title: 'Мой кабинет', icon: '👤', path: '/', special: true },
     { title: 'Курсы', icon: '📚', path: '/catalog' },
     { title: 'Прохожу', icon: '🏃', path: '/in-progress' },
+    { title: 'Избранное', icon: '⭐️', path: '/favorites' },
+    { title: 'Хочу пройти', icon: '📅', path: '/wishlist' },
+    { title: 'Архив', icon: '🗄️', path: '/archive' },
+    { title: 'Классы', icon: '🎓', path: '/classes' },
     { title: 'Уведомления', icon: '🔔', path: '/notifications' }
 ];
 

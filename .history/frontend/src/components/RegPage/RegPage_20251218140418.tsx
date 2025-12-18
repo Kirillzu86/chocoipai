@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent, type SVGProps, type FC } from "react";
+import { useState, type ChangeEvent, type FormEvent, type SVGProps } from "react";
 import "./StyleRegPage.css";
 
 type IconProps = SVGProps<SVGSVGElement>;
@@ -44,18 +44,13 @@ const Icons = {
     )
 };
 
-interface RegPageProps {
-    theme: "dark" | "light";
-    toggleTheme: () => void;
-}
-
-function RegPage({ theme, toggleTheme }: RegPageProps) {
+function RegPage() {
     const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
     const [message, setMessage] = useState({ text: '', type: '' });
     const [errors, setErrors] = useState({ username: false, email: false, password: false, confirmPassword: false });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
-    const isDarkTheme = theme === "dark";
+    const [isDarkTheme, setIsDarkTheme] = useState(true);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -64,43 +59,21 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
         setMessage({ text: '', type: '' });
     };
 
-    const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const { username, email, password, confirmPassword } = formData;
         if (!username || !email || !password || !confirmPassword) {
             setMessage({ text: 'Заполните все поля', type: 'error' });
             return;
         }
-        if (password.length < 6) {
-            setMessage({ text: 'Пароль должен быть не менее 6 символов', type: 'error' });
-            return;
-        }
         if (password !== confirmPassword) {
             setMessage({ text: 'Пароли не совпадают', type: 'error' });
             return;
         }
-        try {
-            const res = await fetch("http://localhost:8000/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, email, password }),
-            });
-
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.detail || "Не удалось создать аккаунт");
-            }
-
-            const user = await res.json();
-            // сохраняем текущего пользователя в localStorage
-            window.localStorage.setItem("currentUser", JSON.stringify(user));
-            setMessage({ text: `Аккаунт успешно создан для ${user.username}!`, type: 'success' });
-        } catch (err: any) {
-            setMessage({ text: err.message || 'Ошибка при регистрации', type: 'error' });
-        }
+        setMessage({ text: `Добро пожаловать, ${username}!`, type: 'success' });
     };
 
-    const renderInputField = (label: string, type: string, name: keyof typeof formData, Icon: FC<IconProps>, isPass = false, visible = false, toggle = () => {}) => {
+    const renderInputField = (label: string, type: string, name: keyof typeof formData, Icon: React.FC<IconProps>, isPass = false, visible = false, toggle = () => {}) => {
         const hasError = errors[name];
         return (
             <div className="input-group">
@@ -132,19 +105,19 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
 
     return (
         <div className="log-page-container" style={{ 
-            backgroundColor: isDarkTheme ? '#030712' : '#f8fafc',
-            backgroundImage: isDarkTheme ? 'radial-gradient(circle at 50% 0%, #3b82f640, #030712 35%)' : 'radial-gradient(circle at 50% 0%, #e2e8f040, #f8fafc 35%)',
+            backgroundColor: isDarkTheme ? '#030712' : '#fef3c7',
+            backgroundImage: isDarkTheme ? 'radial-gradient(circle at 50% 0%, #3b82f640, #030712 35%)' : 'radial-gradient(circle at 50% 0%, #fcd34d40, #fef3c7 35%)',
             animation: 'pulse-spotlight 15s infinite ease-in-out'
         }}>
-            <button onClick={toggleTheme} style={{ position: 'absolute', top: '2rem', width: '40px', height: '40px', borderRadius: '50%', border: 'none', cursor: 'pointer', background: isDarkTheme ? '#eee' : '#111827' }} />
+            <button onClick={() => setIsDarkTheme(!isDarkTheme)} style={{ position: 'absolute', top: '2rem', width: '40px', height: '40px', borderRadius: '50%', border: 'none', cursor: 'pointer', background: isDarkTheme ? '#eee' : '#facc15' }} />
 
             <div className="form-card" style={{ 
-                backgroundColor: isDarkTheme ? '#111827' : '#ffffff', 
-                color: isDarkTheme ? 'white' : '#0f172a',
-                borderColor: isDarkTheme ? '#1f2937' : '#e2e8f0'
+                backgroundColor: isDarkTheme ? '#111827' : '#fefce8', 
+                color: isDarkTheme ? 'white' : '#111827',
+                borderColor: isDarkTheme ? '#1f2937' : '#eab308'
             }}>
-                <h1 className="brand-title">Регистрация</h1>
-                <p className="form-subtitle">Создать новый аккаунт</p>
+                <h1 className="brand-title">Вход</h1>
+                <p className="form-subtitle">Войти в Аккаунт</p>
 
                 {message.text && (
                     <div className={`alert-box ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
@@ -158,7 +131,7 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
                     {renderInputField('Email', 'email', 'email', Icons.Mail)}
                     {renderInputField('Пароль', 'password', 'password', Icons.Lock, true, isPasswordVisible, () => setIsPasswordVisible(!isPasswordVisible))}
                     {renderInputField('Повтор пароля', 'password', 'confirmPassword', Icons.Lock, true, isConfirmPasswordVisible, () => setIsConfirmPasswordVisible(!isConfirmPasswordVisible))}
-                    <button type="submit" className="submit-btn" style={{ backgroundColor: isDarkTheme ? 'white' : '#111827', color: isDarkTheme ? '#111827' : 'white' }}>Зарегистрироваться</button>
+                    <button type="submit" className="submit-btn" style={{ backgroundColor: isDarkTheme ? 'white' : '#111827', color: isDarkTheme ? '#111827' : 'white' }}>Войти</button>
                 </form>
             </div>
         </div>

@@ -21,10 +21,6 @@ services:
       - db
     environment:
       POSTGRES_HOST: db
-      POSTGRES_DB: Stepik
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_PORT: 5432
 
   frontend:
     build: ./frontend

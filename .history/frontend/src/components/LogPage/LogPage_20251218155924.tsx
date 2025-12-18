@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent, type SVGProps, type FC } from "react";
-import "./StyleRegPage.css";
+import "./StyleLogPage.css";
 
 type IconProps = SVGProps<SVGSVGElement>;
 
@@ -44,17 +44,16 @@ const Icons = {
     )
 };
 
-interface RegPageProps {
+interface LogPageProps {
     theme: "dark" | "light";
     toggleTheme: () => void;
 }
 
-function RegPage({ theme, toggleTheme }: RegPageProps) {
-    const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
+function LogPage({ theme, toggleTheme }: LogPageProps) {
+    const [formData, setFormData] = useState({ login: '', password: '' });
     const [message, setMessage] = useState({ text: '', type: '' });
-    const [errors, setErrors] = useState({ username: false, email: false, password: false, confirmPassword: false });
+    const [errors, setErrors] = useState({ login: false, password: false });
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-    const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
     const isDarkTheme = theme === "dark";
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -66,37 +65,28 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
 
     const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const { username, email, password, confirmPassword } = formData;
-        if (!username || !email || !password || !confirmPassword) {
+        const { login, password } = formData;
+        if (!login || !password) {
             setMessage({ text: 'Заполните все поля', type: 'error' });
             return;
         }
-        if (password.length < 6) {
-            setMessage({ text: 'Пароль должен быть не менее 6 символов', type: 'error' });
-            return;
-        }
-        if (password !== confirmPassword) {
-            setMessage({ text: 'Пароли не совпадают', type: 'error' });
-            return;
-        }
         try {
-            const res = await fetch("http://localhost:8000/auth/register", {
+            const res = await fetch("http://localhost:8000/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, email, password }),
+                body: JSON.stringify({ login, password }),
             });
 
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
-                throw new Error(data.detail || "Не удалось создать аккаунт");
+                throw new Error(data.detail || "Ошибка при входе");
             }
 
             const user = await res.json();
-            // сохраняем текущего пользователя в localStorage
             window.localStorage.setItem("currentUser", JSON.stringify(user));
-            setMessage({ text: `Аккаунт успешно создан для ${user.username}!`, type: 'success' });
+            setMessage({ text: `Добро пожаловать, ${user.username}!`, type: 'success' });
         } catch (err: any) {
-            setMessage({ text: err.message || 'Ошибка при регистрации', type: 'error' });
+            setMessage({ text: err.message || "Ошибка при входе", type: "error" });
         }
     };
 
@@ -143,8 +133,8 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
                 color: isDarkTheme ? 'white' : '#0f172a',
                 borderColor: isDarkTheme ? '#1f2937' : '#e2e8f0'
             }}>
-                <h1 className="brand-title">Регистрация</h1>
-                <p className="form-subtitle">Создать новый аккаунт</p>
+                <h1 className="brand-title">Вход</h1>
+                <p className="form-subtitle">Войти в Аккаунт</p>
 
                 {message.text && (
                     <div className={`alert-box ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
@@ -154,15 +144,13 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
                 )}
 
                 <form onSubmit={handleFormSubmit}>
-                    {renderInputField('Имя пользователя', 'text', 'username', Icons.User)}
-                    {renderInputField('Email', 'email', 'email', Icons.Mail)}
+                    {renderInputField('Почта или имя пользователя', 'text', 'login', Icons.Mail)}
                     {renderInputField('Пароль', 'password', 'password', Icons.Lock, true, isPasswordVisible, () => setIsPasswordVisible(!isPasswordVisible))}
-                    {renderInputField('Повтор пароля', 'password', 'confirmPassword', Icons.Lock, true, isConfirmPasswordVisible, () => setIsConfirmPasswordVisible(!isConfirmPasswordVisible))}
-                    <button type="submit" className="submit-btn" style={{ backgroundColor: isDarkTheme ? 'white' : '#111827', color: isDarkTheme ? '#111827' : 'white' }}>Зарегистрироваться</button>
+                    <button type="submit" className="submit-btn" style={{ backgroundColor: isDarkTheme ? 'white' : '#111827', color: isDarkTheme ? '#111827' : 'white' }}>Войти</button>
                 </form>
             </div>
         </div>
     );
 }
 
-export default RegPage;
+export default LogPage;

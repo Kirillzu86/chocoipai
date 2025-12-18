@@ -90,24 +90,6 @@ body[data-theme="dark"] .theme-toggle-btn:hover {
     gap: 20px;
 }
 
-.welcome-banner {
-    padding: 14px 18px;
-    border-radius: 12px;
-    background: rgba(15, 23, 42, 0.04);
-    border: 1px solid rgba(148, 163, 184, 0.4);
-    font-size: 0.95rem;
-    margin-bottom: 12px;
-}
-
-.welcome-name {
-    font-weight: 600;
-}
-
-body[data-theme="dark"] .welcome-banner {
-    background: rgba(15, 23, 42, 0.8);
-    border-color: rgba(148, 163, 184, 0.4);
-}
-
 /* --- 3. Карточка Курса --- */
 .course-card {
     background-color: #fff;

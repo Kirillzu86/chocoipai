@@ -2,16 +2,9 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import Header from "..//Header/Header"; // <-- ИМПОРТ HEADER
+import Sidebar from "../Sidebar/sidebar"; // Предполагаем, что Sidebar находится в папке Sidebar
 import "./StyleHomePage.css"; 
-import '../Sidebar/StyleSidebar.css'; 
 
-// --- Данные для навигации (из Sidebar.tsx) ---
-const navItems = [
-    { title: 'Мой кабинет', icon: '👤', path: '/', special: true },
-    { title: 'Курсы', icon: '📚', path: '/catalog' },
-    { title: 'Прохожу', icon: '🏃', path: '/in-progress' },
-    { title: 'Уведомления', icon: '🔔', path: '/notifications' }
-];
 // --- Интерфейсы (должны совпадать с models.py в FastAPI) ---
 interface Course {
     id: number;
@@ -85,7 +78,6 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ id: number; username: string; email: string } | null>(null);
   const isDarkTheme = theme === "dark";
 
   // Логика загрузки данных
@@ -104,21 +96,6 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
     };
 
     fetchCourses();
-  }, []);
-
-  // Читаем текущего пользователя из localStorage
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem("currentUser");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed.username === "string") {
-          setCurrentUser(parsed);
-        }
-      }
-    } catch {
-      // игнорируем ошибки парсинга
-    }
   }, []);
 
   // Фон страницы в той же стилистике, что и RegPage/LogPage
@@ -159,27 +136,7 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
         <Header /> {/* <-- ВСТАВЛЕННЫЙ HEADER */}
 
         <div className="app-layout">
-          {/* --- Код из Sidebar.tsx --- */}
-          <nav className="sidebar-container">
-              {navItems.map((item, index) => (
-                  <Link to={item.path} key={index} className={`nav-item ${item.special ? 'nav-item-special' : ''}`}>
-                      <span className="nav-icon">{item.icon}</span>
-                      {item.title}
-                  </Link>
-              ))}
-              
-              <div className="nav-separator"></div>
-              
-              <div className="sidebar-footer">
-                  <span className="nav-icon">💡</span>
-                  Помощь
-              </div>
-              
-              <div className="sidebar-auth-links">
-                  <Link to="/login" className="auth-link">Вход</Link>
-                  <Link to="/register" className="auth-link">Регистрация</Link>
-              </div>
-          </nav>
+          <Sidebar /> {/* <-- Боковая панель */}
 
           <div className="content-area">
             <div className="content-header">
@@ -196,11 +153,6 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
             <section className="dashboard-section">
               {/* Лента курсов */}
               <div className="course-list">
-                {currentUser && (
-                  <div className="welcome-banner">
-                    Привет, <span className="welcome-name">{currentUser.username}</span>! 🎓
-                  </div>
-                )}
                 {courses.map((course) => (
                   <CourseCard key={course.id} course={course} />
                 ))}
