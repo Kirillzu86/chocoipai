@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Header from "../Header/Header"; // <-- ИМПОРТ HEADER
 import "./StyleHomePage.css"; 
 import '../Sidebar/StyleSidebar.css'; 
@@ -90,19 +90,6 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
   const [currentUser, setCurrentUser] = useState<{ id: number; username: string; email: string } | null>(null);
   const isDarkTheme = theme === "dark";
   const location = useLocation();
-  const navigate = useNavigate();
-  const [fetchTrigger, setFetchTrigger] = useState(0); // Состояние для ручного обновления
-
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    setCurrentUser(null);
-    setMyCourses([]); // Очищаем курсы пользователя
-    navigate('/'); // Перенаправляем на главную для полного обновления состояния
-  };
-
-  const refreshCourses = () => {
-    setFetchTrigger(Date.now()); // Меняем состояние, чтобы вызвать useEffect
-  };
 
   // Логика загрузки данных
   useEffect(() => {
@@ -131,7 +118,6 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
                 );
                 
                 setAllCourses([]); // Очищаем список всех курсов, чтобы не мешал
-                console.log("Получены курсы пользователя:", myCoursesResponse.data); // ДИАГНОСТИКА
                 setMyCourses(myCoursesResponse.data);
             } else {
                 setCurrentUser(null);
@@ -153,7 +139,7 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
         }
     };
     fetchData();
-  }, [location, fetchTrigger]); // Добавляем fetchTrigger в зависимости
+  }, [location]);
 
   // Фон страницы в той же стилистике, что и RegPage/LogPage
   const backgroundStyle: React.CSSProperties = {
@@ -209,33 +195,23 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
                   Помощь
               </div>
               
-              {/* --- Динамический блок входа/выхода --- */}
               <div className="sidebar-auth-links">
-                  {currentUser ? (
-                      <>
-                          <span className="auth-link-user">👤 {currentUser.username}</span>
-                          <button onClick={handleLogout} className="auth-link-button">Выход</button>
-                      </>
-                  ) : (
-                      <Link to="/login" className="auth-link">Вход / Регистрация</Link>
-                  )}
+                  <Link to="/login" className="auth-link">Вход</Link>
+                  <Link to="/register" className="auth-link">Регистрация</Link>
               </div>
           </nav>
 
           <div className="content-area">
             <div className="content-header">
               <h1 className="main-title">Моё обучение</h1>
-              <div className="header-actions">
-                <button onClick={refreshCourses} className="refresh-button">Обновить</button>
-                <button
-                  className="theme-toggle-btn"
-                  type="button"
-                  onClick={toggleTheme}
-                  aria-label="Переключить тему"
-                >
-                  {isDarkTheme ? "" : ""}
-                </button>
-              </div>
+              <button
+                className="theme-toggle-btn"
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Переключить тему"
+              >
+                {isDarkTheme ? "" : ""}
+              </button>
             </div>
 
             {loading && <div className="loading-state">Загрузка...</div>}

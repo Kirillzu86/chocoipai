@@ -59,22 +59,13 @@ def init_db() -> None:
             );
             """
         )
-        cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS user_courses (
-                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-                course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
-                PRIMARY KEY (user_id, course_id)
-            );
-            """
-        )
         
-        # --- Добавляем демо-курс, если его еще нет ---
-        cur.execute("SELECT id FROM courses WHERE title = %s", ("Основы Python (с тестом)",))
-        if cur.fetchone() is None:
+        # --- Добавляем демо-курс, если таблица пуста ---
+        cur.execute("SELECT COUNT(*) FROM courses")
+        if cur.fetchone()[0] == 0:
             cur.execute(
                 "INSERT INTO courses (title, description) VALUES (%s, %s) RETURNING id",
-                ("Основы Python (с тестом)", "Изучите основы языка Python с нуля. Переменные, циклы, функции.")
+                ("Основы Python", "Изучите основы языка Python с нуля. Переменные, циклы, функции.")
             )
             course_id = cur.fetchone()[0]
 
@@ -185,10 +176,6 @@ class LoginRequest(BaseModel):
     login: str
     password: str
 
-class EnrollRequest(BaseModel):
-    user_id: int
-    course_id: int
-
 
 @app.get("/users")
 def get_users():
@@ -211,54 +198,6 @@ def get_users():
             cur.close()
         if conn:
             conn.close()
-
-@app.post("/api/v1/enroll")
-def enroll_user(payload: EnrollRequest):
-    """Записывает пользователя на курс."""
-    conn = get_connection()
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO user_courses (user_id, course_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
-                (payload.user_id, payload.course_id)
-            )
-        conn.commit()
-        return {"message": "Enrolled successfully"}
-    except Exception:
-        logger.exception("Failed to enroll user")
-        raise HTTPException(status_code=500, detail="Ошибка при записи на курс")
-    finally:
-        conn.close()
-
-@app.get("/api/v1/users/{user_id}/courses")
-def get_user_courses(user_id: int):
-    """Возвращает список курсов, на которые записан пользователь."""
-    courses = []
-    try:
-        with get_cursor() as cur:
-            cur.execute("""
-                SELECT c.id, c.title, c.description 
-                FROM courses c
-                JOIN user_courses uc ON c.id = uc.course_id
-                WHERE uc.user_id = %s
-            """, (user_id,))
-            for row in cur.fetchall():
-                courses.append({
-                    "id": row[0], 
-                    "title": row[1], 
-                    "description": row[2],
-                    # Добавляем заглушки, чтобы соответствовать интерфейсу на фронтенде
-                    "rating": 4.5,
-                    "students_count": 123,
-                    "price_status": "Enrolled",
-                    "total_lessons": 3,
-                    "completed_lessons": 0,
-                    "progress_percentage": 0,
-                })
-        return courses
-    except Exception:
-        logger.exception("Failed to fetch user courses")
-        raise HTTPException(status_code=500, detail="Ошибка получения курсов пользователя")
 
 
 @app.get("/api/v1/courses")

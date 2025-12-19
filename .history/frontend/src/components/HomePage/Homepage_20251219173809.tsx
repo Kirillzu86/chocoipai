@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Header from "../Header/Header"; // <-- ИМПОРТ HEADER
 import "./StyleHomePage.css"; 
 import '../Sidebar/StyleSidebar.css'; 
@@ -89,20 +89,6 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: number; username: string; email: string } | null>(null);
   const isDarkTheme = theme === "dark";
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [fetchTrigger, setFetchTrigger] = useState(0); // Состояние для ручного обновления
-
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    setCurrentUser(null);
-    setMyCourses([]); // Очищаем курсы пользователя
-    navigate('/'); // Перенаправляем на главную для полного обновления состояния
-  };
-
-  const refreshCourses = () => {
-    setFetchTrigger(Date.now()); // Меняем состояние, чтобы вызвать useEffect
-  };
 
   // Логика загрузки данных
   useEffect(() => {
@@ -110,38 +96,34 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
         setLoading(true);
         setError(null);
         try {
-            const timestamp = new Date().getTime();
+            // Параллельно загружаем все курсы и данные пользователя
             const config = {
                 headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Cache-Control': 'no-cache',
                     'Pragma': 'no-cache',
                     'Expires': '0',
                 },
             };
+            const allCoursesPromise = axios.get<Course[]>("http://localhost:8000/api/v1/courses", config);
 
             const userStr = localStorage.getItem("currentUser");
             const user = userStr ? JSON.parse(userStr) : null;
 
             if (user && user.id) {
                 setCurrentUser(user);
-                // Если пользователь вошел, загружаем ТОЛЬКО его курсы
-                const myCoursesResponse = await axios.get<Course[]>(
-                    `http://localhost:8000/api/v1/users/${user.id}/courses?_t=${timestamp}`,
+                const myCoursesPromise = axios.get<Course[]>(
+                    `http://localhost:8000/api/v1/users/${user.id}/courses`,
                     config
                 );
                 
-                setAllCourses([]); // Очищаем список всех курсов, чтобы не мешал
-                console.log("Получены курсы пользователя:", myCoursesResponse.data); // ДИАГНОСТИКА
+                const [allCoursesResponse, myCoursesResponse] = await Promise.all([allCoursesPromise, myCoursesPromise]);
+                
+                setAllCourses(allCoursesResponse.data);
                 setMyCourses(myCoursesResponse.data);
             } else {
                 setCurrentUser(null);
                 localStorage.removeItem("currentUser"); // На всякий случай
-                
-                // Если гость, загружаем ВСЕ курсы
-                const allCoursesResponse = await axios.get<Course[]>(
-                    `http://localhost:8000/api/v1/courses?_t=${timestamp}`, 
-                    config
-                );
+                const allCoursesResponse = await allCoursesPromise;
                 setAllCourses(allCoursesResponse.data);
                 setMyCourses([]); // Убедимся, что курсы пользователя пусты
             }
@@ -153,7 +135,7 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
         }
     };
     fetchData();
-  }, [location, fetchTrigger]); // Добавляем fetchTrigger в зависимости
+  }, []);
 
   // Фон страницы в той же стилистике, что и RegPage/LogPage
   const backgroundStyle: React.CSSProperties = {
@@ -209,33 +191,23 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
                   Помощь
               </div>
               
-              {/* --- Динамический блок входа/выхода --- */}
               <div className="sidebar-auth-links">
-                  {currentUser ? (
-                      <>
-                          <span className="auth-link-user">👤 {currentUser.username}</span>
-                          <button onClick={handleLogout} className="auth-link-button">Выход</button>
-                      </>
-                  ) : (
-                      <Link to="/login" className="auth-link">Вход / Регистрация</Link>
-                  )}
+                  <Link to="/login" className="auth-link">Вход</Link>
+                  <Link to="/register" className="auth-link">Регистрация</Link>
               </div>
           </nav>
 
           <div className="content-area">
             <div className="content-header">
               <h1 className="main-title">Моё обучение</h1>
-              <div className="header-actions">
-                <button onClick={refreshCourses} className="refresh-button">Обновить</button>
-                <button
-                  className="theme-toggle-btn"
-                  type="button"
-                  onClick={toggleTheme}
-                  aria-label="Переключить тему"
-                >
-                  {isDarkTheme ? "" : ""}
-                </button>
-              </div>
+              <button
+                className="theme-toggle-btn"
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Переключить тему"
+              >
+                {isDarkTheme ? "" : ""}
+              </button>
             </div>
 
             {loading && <div className="loading-state">Загрузка...</div>}

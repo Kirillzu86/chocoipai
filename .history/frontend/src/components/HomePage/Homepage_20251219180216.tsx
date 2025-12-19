@@ -233,7 +233,7 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
                   onClick={toggleTheme}
                   aria-label="Переключить тему"
                 >
-                  {isDarkTheme ? "" : ""}
+                  {isDarkTheme ? "☀️" : "🌙"}
                 </button>
               </div>
             </div>

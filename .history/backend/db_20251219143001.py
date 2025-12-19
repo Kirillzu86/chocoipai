@@ -5,7 +5,7 @@ from contextlib import contextmanager
 # Получаем данные для подключения к БД из переменных окружения
 DB_NAME = os.getenv("POSTGRES_DB", "postgres")
 DB_USER = os.getenv("POSTGRES_USER", "postgres")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "1234")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
 DB_HOST = os.getenv("POSTGRES_HOST", "localhost") # 'db' - это имя сервиса PostgreSQL в Docker Compose
 DB_PORT = os.getenv("POSTGRES_PORT", "5432")
 
@@ -16,7 +16,8 @@ def get_connection():
         user=DB_USER,
         password=DB_PASSWORD,
         host=DB_HOST,
-        port=DB_PORT
+        port=DB_PORT,
+        client_encoding="utf-8"
     )
 
 @contextmanager

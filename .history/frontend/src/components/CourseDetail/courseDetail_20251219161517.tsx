@@ -65,22 +65,8 @@ function CourseDetail({ theme, toggleTheme }: CourseDetailProps) {
     }, [id]);
 
     // Обработчики теста
-    const startLearning = async () => {
+    const startLearning = () => {
         if (course && course.questions.length > 0) {
-            // Если пользователь авторизован, сохраняем информацию, что он начал этот курс
-            const userStr = localStorage.getItem("user");
-            if (userStr) {
-                try {
-                    const user = JSON.parse(userStr);
-                    await axios.post("http://localhost:8000/api/v1/enroll", {
-                        user_id: user.id,
-                        course_id: course.id
-                    });
-                } catch (e) {
-                    console.error("Не удалось записаться на курс:", e);
-                }
-            }
-
             setActiveQuestionIndex(0);
             setIsAnswerChecked(false);
             setSelectedAnswerId(null);

@@ -5,9 +5,6 @@ import HomePage from "./components/HomePage/Homepage";
 import LogPage from "./components/LogPage/LogPage";
 import RegPage from "./components/RegPage/RegPage";
 import Catalog from "./components/Catalog/Catalog";
-import CourseDetail from './components/CourseDetail/courseDetail';
-
-
 
 function App() {
   const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
@@ -38,7 +35,6 @@ function App() {
       <Route path="/login" element={<LogPage theme={theme} toggleTheme={toggleTheme} />} />
       <Route path="/register" element={<RegPage theme={theme} toggleTheme={toggleTheme} />} />
       <Route path="/catalog" element={<Catalog theme={theme} toggleTheme={toggleTheme} />} />
-      <Route path="/course/:id" element={<CourseDetail theme={theme} toggleTheme={toggleTheme} />} />
     </Routes>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import Header from "../Header/Header"; // <-- ИМПОРТ HEADER
+import { Link } from "react-router-dom";
+import Header from "..//Header/Header"; // <-- ИМПОРТ HEADER
 import "./StyleHomePage.css"; 
 import '../Sidebar/StyleSidebar.css'; 
 
@@ -42,17 +42,14 @@ function CourseCard({ course }: CourseCardProps) {
         <span>👤 {course.students_count.toLocaleString()}</span>
         <span className={`price-status ${course.price_status.toLowerCase()}`}>{course.price_status}</span>
       </div>
-      {/* Возвращаем прогресс-бар с проверкой на наличие данных */}
-      {typeof course.progress_percentage === 'number' && (
-        <>
-          <div className="card-progress">
-            <div style={{ width: `${course.progress_percentage}%` }} className="progress-bar"></div>
-          </div>
-          <div className="progress-text">
-            {course.progress_percentage.toFixed(0)}% пройдено
-          </div>
-        </>
-      )}
+
+      {/* Прогресс-бар */}
+      <div className="card-progress">
+        <div style={{ width: `${course.progress_percentage}%` }} className="progress-bar"></div>
+      </div>
+      <div className="progress-text">
+        {course.progress_percentage.toFixed(0)}% пройдено
+      </div>
     </Link>
   );
 }
@@ -83,67 +80,31 @@ interface HomePageProps {
 }
 
 function HomePage({ theme, toggleTheme }: HomePageProps) {
-  const [allCourses, setAllCourses] = useState<Course[]>([]);
   const [myCourses, setMyCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{ id: number; username: string; email: string } | null>(null);
   const isDarkTheme = theme === "dark";
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [fetchTrigger, setFetchTrigger] = useState(0); // Состояние для ручного обновления
-
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    setCurrentUser(null);
-    setMyCourses([]); // Очищаем курсы пользователя
-    navigate('/'); // Перенаправляем на главную для полного обновления состояния
-  };
-
-  const refreshCourses = () => {
-    setFetchTrigger(Date.now()); // Меняем состояние, чтобы вызвать useEffect
-  };
 
   // Логика загрузки данных
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchUserData = async () => {
         setLoading(true);
         setError(null);
         try {
-            const timestamp = new Date().getTime();
-            const config = {
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0',
-                },
-            };
-
+            // 1. Проверяем, есть ли пользователь в localStorage
             const userStr = localStorage.getItem("currentUser");
-            const user = userStr ? JSON.parse(userStr) : null;
-
-            if (user && user.id) {
-                setCurrentUser(user);
-                // Если пользователь вошел, загружаем ТОЛЬКО его курсы
-                const myCoursesResponse = await axios.get<Course[]>(
-                    `http://localhost:8000/api/v1/users/${user.id}/courses?_t=${timestamp}`,
-                    config
-                );
-                
-                setAllCourses([]); // Очищаем список всех курсов, чтобы не мешал
-                console.log("Получены курсы пользователя:", myCoursesResponse.data); // ДИАГНОСТИКА
-                setMyCourses(myCoursesResponse.data);
-            } else {
-                setCurrentUser(null);
-                localStorage.removeItem("currentUser"); // На всякий случай
-                
-                // Если гость, загружаем ВСЕ курсы
-                const allCoursesResponse = await axios.get<Course[]>(
-                    `http://localhost:8000/api/v1/courses?_t=${timestamp}`, 
-                    config
-                );
-                setAllCourses(allCoursesResponse.data);
-                setMyCourses([]); // Убедимся, что курсы пользователя пусты
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                if (user && user.id) {
+                    setCurrentUser(user);
+                    // 2. Если пользователь есть, загружаем его курсы
+                    const response = await axios.get<Course[]>(`http://localhost:8000/api/v1/users/${user.id}/courses`);
+                    setMyCourses(response.data);
+                } else {
+                    localStorage.removeItem("currentUser");
+                    setCurrentUser(null);
+                }
             }
         } catch (err) {
             console.error("Ошибка загрузки данных:", err);
@@ -152,8 +113,8 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
             setLoading(false);
         }
     };
-    fetchData();
-  }, [location, fetchTrigger]); // Добавляем fetchTrigger в зависимости
+    fetchUserData();
+  }, []);
 
   // Фон страницы в той же стилистике, что и RegPage/LogPage
   const backgroundStyle: React.CSSProperties = {
@@ -209,33 +170,22 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
                   Помощь
               </div>
               
-              {/* --- Динамический блок входа/выхода --- */}
               <div className="sidebar-auth-links">
-                  {currentUser ? (
-                      <>
-                          <span className="auth-link-user">👤 {currentUser.username}</span>
-                          <button onClick={handleLogout} className="auth-link-button">Выход</button>
-                      </>
-                  ) : (
-                      <Link to="/login" className="auth-link">Вход / Регистрация</Link>
-                  )}
+                  <Link to="/login" className="auth-link">Вход</Link>
+                  <Link to="/register" className="auth-link">Регистрация</Link>
               </div>
           </nav>
 
           <div className="content-area">
             <div className="content-header">
               <h1 className="main-title">Моё обучение</h1>
-              <div className="header-actions">
-                <button onClick={refreshCourses} className="refresh-button">Обновить</button>
-                <button
-                  className="theme-toggle-btn"
-                  type="button"
-                  onClick={toggleTheme}
-                  aria-label="Переключить тему"
-                >
-                  {isDarkTheme ? "" : ""}
-                </button>
-              </div>
+              <button
+                className="theme-toggle-btn"
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Переключить тему"
+              >
+              </button>
             </div>
 
             {loading && <div className="loading-state">Загрузка...</div>}
@@ -245,37 +195,21 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
             <section className="dashboard-section">
               {/* Лента курсов */}
               <div className="course-list">
-                {currentUser ? ( // --- Сценарий для залогиненного пользователя ---
+                {currentUser ? (
                   <>
                     <div className="welcome-banner">
                       Привет, <span className="welcome-name">{currentUser.username}</span>! 🎓
                     </div>
-
                     {myCourses.length > 0 ? (
-                      <>
-                        <h2 className="section-title">Мои курсы</h2>
-                        {myCourses.map((course) => (
-                          <CourseCard key={`my-${course.id}`} course={course} />
-                        ))}
-                        <div style={{ marginTop: '20px' }}>
-                            <Link to="/catalog" className="auth-link">Найти больше курсов в каталоге →</Link>
-                        </div>
-                      </>
+                      myCourses.map((course) => (
+                        <CourseCard key={course.id} course={course} />
+                      ))
                     ) : (
-                        <div className="welcome-banner">
-                            У вас пока нет активных курсов. <Link to="/catalog" className="auth-link">Перейти в каталог</Link>
-                        </div>
+                      <div className="welcome-banner">Вы пока не записаны ни на один курс. <Link to="/catalog" className="auth-link">Перейти в каталог</Link></div>
                     )}
                   </>
-                ) : ( // --- Сценарий для гостя ---
-                  <>
-                    <div className="welcome-banner">Чтобы записываться на курсы, <Link to="/login" className="auth-link">войдите в аккаунт</Link>. А пока просмотрите наш каталог.</div>
-                    {allCourses.length > 0 ? allCourses.map((course) => (
-                      <CourseCard key={course.id} course={course} />
-                    )) : (
-                      <div className="welcome-banner">Курсы скоро появятся!</div>
-                    )}
-                  </>
+                ) : (
+                  <div className="welcome-banner">Чтобы увидеть свои курсы, <Link to="/login" className="auth-link">войдите в аккаунт</Link>.</div>
                 )}
               </div>
 

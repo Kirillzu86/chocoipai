@@ -244,16 +244,9 @@ def get_user_courses(user_id: int):
             """, (user_id,))
             for row in cur.fetchall():
                 courses.append({
-                    "id": row[0], 
-                    "title": row[1], 
-                    "description": row[2],
-                    # Добавляем заглушки, чтобы соответствовать интерфейсу на фронтенде
-                    "rating": 4.5,
-                    "students_count": 123,
-                    "price_status": "Enrolled",
-                    "total_lessons": 3,
-                    "completed_lessons": 0,
-                    "progress_percentage": 0,
+                    "id": row[0],
+                    "title": row[1],
+                    "description": row[2]
                 })
         return courses
     except Exception:
