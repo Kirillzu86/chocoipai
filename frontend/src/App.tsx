@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { API_URL } from "./api/api";
 import { Routes, Route } from "react-router-dom";
 
 import HomePage from "./components/HomePage/Homepage";
@@ -6,6 +7,7 @@ import LogPage from "./components/LogPage/LogPage";
 import RegPage from "./components/RegPage/RegPage";
 import Catalog from "./components/Catalog/Catalog";
 import CourseDetail from './components/CourseDetail/courseDetail';
+import CreateCourse from './components/CreateCourse/CreateCourse';
 
 
 
@@ -16,9 +18,11 @@ function App() {
   const toggleTheme = () => setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
   useEffect(() => {
-    fetch('http://localhost:8000/users')
+    const base = API_URL.replace(/\/$/, '');
+    fetch(`${base}/users`)
       .then(res => res.json())
-      .then(data => setUsers(data));
+      .then(data => setUsers(data))
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -38,6 +42,7 @@ function App() {
       <Route path="/login" element={<LogPage theme={theme} toggleTheme={toggleTheme} />} />
       <Route path="/register" element={<RegPage theme={theme} toggleTheme={toggleTheme} />} />
       <Route path="/catalog" element={<Catalog theme={theme} toggleTheme={toggleTheme} />} />
+      <Route path="/create-course" element={<CreateCourse theme={theme} toggleTheme={toggleTheme} />} />
       <Route path="/course/:id" element={<CourseDetail theme={theme} toggleTheme={toggleTheme} />} />
     </Routes>
   );

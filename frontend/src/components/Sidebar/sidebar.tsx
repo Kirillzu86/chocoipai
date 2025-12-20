@@ -6,6 +6,7 @@ import './StyleSidebar.css';
 const navItems = [
     { title: 'Мой кабинет', icon: '👤', path: '/', special: true },
     { title: 'Курсы', icon: '📚', path: '/catalog' },
+    { title: 'Создать курс', icon: '✍️', path: '/create-course' },
     { title: 'Прохожу', icon: '🏃', path: '/in-progress' },
     { title: 'Уведомления', icon: '🔔', path: '/notifications' }
 ];

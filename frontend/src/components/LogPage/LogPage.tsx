@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent, type SVGProps, type FC } from "react";
+import { API_URL } from "../../api/api";
 import { useNavigate } from "react-router-dom";
 import "./StyleLogPage.css";
 
@@ -73,7 +74,8 @@ function LogPage({ theme, toggleTheme }: LogPageProps) {
             return;
         }
         try {
-            const res = await fetch("http://localhost:8000/auth/login", {
+            const base = API_URL.replace(/\/$/, '');
+            const res = await fetch(`${base}/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ login, password }),

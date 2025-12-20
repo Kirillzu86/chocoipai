@@ -1,9 +1,49 @@
 // frontend/src/components/Header/Header.tsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import './StyleHeader.css';
 
 const Header: React.FC = () => {
+    const location = useLocation();
+    const [currentUser, setCurrentUser] = useState<any>(null);
+
+    // Вешаем клавиатурное сокращение Shift+S для прокрутки вниз
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.shiftKey && (e.key === 'S' || e.key === 's')) {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, []);
+
+    // Обновляем `currentUser` при смене маршрута (вход/выход делает navigate)
+    useEffect(() => {
+        const raw = localStorage.getItem('currentUser');
+        try {
+            setCurrentUser(raw ? JSON.parse(raw) : null);
+        } catch (e) {
+            setCurrentUser(null);
+        }
+    }, [location]);
+
+    // Слушаем события storage для обновления в других вкладках
+    useEffect(() => {
+        const onStorage = (e: StorageEvent) => {
+            if (e.key === 'currentUser') {
+                try {
+                    setCurrentUser(e.newValue ? JSON.parse(e.newValue) : null);
+                } catch {
+                    setCurrentUser(null);
+                }
+            }
+        };
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+    }, []);
+
     return (
         <header className="main-header-area">
             
@@ -11,8 +51,8 @@ const Header: React.FC = () => {
             <nav className="header-nav">
                 <span className="nav-logo">StepLearn</span> 
                 <a href="/catalog" className="nav-link">Каталог</a>
-                <a href="/my-courses" className="nav-link nav-link-active">Моё обучение</a>
-                <a href="/teach" className="nav-link">Преподавание</a>
+                <a href="/" className="nav-link nav-link-active">Моё обучение</a>
+                <a href="/create-course" className="nav-link">Преподавание</a>
             </nav>
 
             {/* Поисковая строка и Аватар */}
@@ -36,14 +76,30 @@ const Header: React.FC = () => {
                     <span className="notification-badge">3</span>
                 </div>
 
-                {/* 3. Аватарка пользователя */}
+                {/* 3. Кнопка "Прокрутить вниз" */}
+                <button
+                    aria-label="Scroll to bottom"
+                    title="Прокрутить вниз (Shift+S)"
+                    className="scroll-down-button"
+                    onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })}
+                >
+                    ⬇️
+                </button>
+
+                {/* 4. Аватарка пользователя */}
                 <div className="user-avatar-container">
-                    <span className="user-avatar">H</span>
-                    {/* H - Первая буква имени (например, Helen) */}
+                    <span className="user-avatar">
+                        {(() => {
+                            if (!currentUser) return 'H';
+                            const name = (currentUser.username || currentUser.name || currentUser.email || '') + '';
+                            return name.trim() ? name.trim()[0].toUpperCase() : 'H';
+                        })()}
+                    </span>
                 </div>
             </div>
         </header>
     );
+
 };
 
 export default Header;

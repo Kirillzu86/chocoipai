@@ -179,3 +179,16 @@ body[data-theme="dark"] .user-avatar-container {
     background-color: #f97316;
     color: #111827;
 }
+
+/* Кнопка прокрутки вниз */
+.scroll-down-button {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+    padding: 6px;
+}
+
+body[data-theme="dark"] .scroll-down-button {
+    color: #e5e7eb;
+}

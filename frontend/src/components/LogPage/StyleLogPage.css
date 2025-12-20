@@ -1,7 +1,8 @@
 html, body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    /* allow normal scrolling — previously set to hidden which disables mouse wheel */
+    overflow: auto;
 }
 
 @keyframes pulse-spotlight {

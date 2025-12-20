@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { API_URL } from "../../api/api";
 import { useParams, Link } from "react-router-dom";
 import Header from "../Header/Header";
 import "../HomePage/StyleHomePage.css"; // Используем общие стили макета
@@ -52,8 +53,23 @@ function CourseDetail({ theme, toggleTheme }: CourseDetailProps) {
     useEffect(() => {
         const fetchCourse = async () => {
             try {
-                const response = await axios.get<CourseDetailData>(`http://localhost:8000/api/v1/course/${id}`);
+                const base = API_URL.replace(/\/$/, '');
+                const response = await axios.get<CourseDetailData>(`${base}/api/v1/course/${id}`);
                 setCourse(response.data);
+                // Если пользователь уже начинал этот курс — восстановим позицию из localStorage
+                const userStr = localStorage.getItem("currentUser");
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        const progMap = user.enrolledProgress || {};
+                        const saved = progMap[String(response.data.id)];
+                        if (saved && typeof saved.currentIndex === 'number') {
+                            setActiveQuestionIndex(saved.currentIndex);
+                        }
+                    } catch (e) {
+                        console.warn('Не удалось восстановить прогресс из localStorage', e);
+                    }
+                }
             } catch (err) {
                 console.error(err);
                 setError("Не удалось загрузить курс. Возможно, он не существует.");
@@ -68,14 +84,31 @@ function CourseDetail({ theme, toggleTheme }: CourseDetailProps) {
     const startLearning = async () => {
         if (course && course.questions.length > 0) {
             // Если пользователь авторизован, сохраняем информацию, что он начал этот курс
-            const userStr = localStorage.getItem("user");
+            const userStr = localStorage.getItem("currentUser");
             if (userStr) {
                 try {
                     const user = JSON.parse(userStr);
-                    await axios.post("http://localhost:8000/api/v1/enroll", {
+                    const base = API_URL.replace(/\/$/, '');
+                    await axios.post(`${base}/api/v1/enroll`, {
                         user_id: user.id,
                         course_id: course.id
                     });
+
+                    // Обновим локально информацию о записях пользователя и прогрессе
+                    try {
+                        const resp = await axios.get(`${base}/api/v1/users/${user.id}/courses`);
+                        const enrolledIds = Array.isArray(resp.data) ? resp.data.map((c: any) => c.id) : [];
+                        const progMap = user.enrolledProgress || {};
+                        progMap[String(course.id)] = { currentIndex: 0, progress_percentage: 0 };
+                        const updatedUser = { ...user, enrolledCourseIds: enrolledIds, enrolledProgress: progMap };
+                        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+                    } catch (e2) {
+                        // Если не можем вбить с бэкенда — всё равно сохраним локально
+                        const progMap = (JSON.parse(userStr).enrolledProgress || {});
+                        progMap[String(course.id)] = { currentIndex: 0, progress_percentage: 0 };
+                        const updatedUser = { ...JSON.parse(userStr), enrolledProgress: progMap };
+                        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+                    }
                 } catch (e) {
                     console.error("Не удалось записаться на курс:", e);
                 }
@@ -97,12 +130,51 @@ function CourseDetail({ theme, toggleTheme }: CourseDetailProps) {
 
     const nextQuestion = () => {
         if (course && activeQuestionIndex !== null) {
+            const base = API_URL.replace(/\/$/, '');
             if (activeQuestionIndex < course.questions.length - 1) {
-                setActiveQuestionIndex(activeQuestionIndex + 1);
+                const nextIndex = activeQuestionIndex + 1;
+                setActiveQuestionIndex(nextIndex);
+                // Сохраняем прогресс в localStorage и (опционально) на бэкенде
+                const userStr = localStorage.getItem('currentUser');
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        const progMap = user.enrolledProgress || {};
+                        const percent = Math.round(((nextIndex) / course.questions.length) * 100);
+                        progMap[String(course.id)] = { currentIndex: nextIndex, progress_percentage: percent };
+                        const updatedUser = { ...user, enrolledProgress: progMap };
+                        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+
+                        // Попробуем уведомить бэкенд, если есть конечная точка прогресса
+                        axios.post(`${base}/api/v1/users/${user.id}/courses/${course.id}/progress`, {
+                            currentIndex: nextIndex,
+                            progress_percentage: percent
+                        }).catch(() => {});
+                    } catch (e) {
+                        console.warn('Не удалось сохранить прогресс в localStorage', e);
+                    }
+                }
                 setIsAnswerChecked(false);
                 setSelectedAnswerId(null);
             } else {
                 alert("Курс завершен! Поздравляем!");
+                // Отметим курс как завершённый (100%)
+                const userStr = localStorage.getItem('currentUser');
+                if (userStr) {
+                    try {
+                        const user = JSON.parse(userStr);
+                        const progMap = user.enrolledProgress || {};
+                        progMap[String(course.id)] = { currentIndex: course.questions.length, progress_percentage: 100 };
+                        const updatedUser = { ...user, enrolledProgress: progMap };
+                        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+                        axios.post(`${base}/api/v1/users/${user.id}/courses/${course.id}/progress`, {
+                            currentIndex: course.questions.length,
+                            progress_percentage: 100
+                        }).catch(() => {});
+                    } catch (e) {
+                        console.warn('Не удалось сохранить итоговый прогресс', e);
+                    }
+                }
                 setActiveQuestionIndex(null); // Возврат к описанию
             }
         }
@@ -139,7 +211,7 @@ function CourseDetail({ theme, toggleTheme }: CourseDetailProps) {
                     </nav>
 
                     {/* Основной контент */}
-                    <div className="content-area" style={{ overflowY: "auto", maxHeight: "calc(100vh - 60px)" }}>
+                    <div className="content-area">
                         <div className="content-header">
                             <Link to="/catalog" className="back-link">← Назад в каталог</Link>
                             <button className="theme-toggle-btn" onClick={toggleTheme} />

@@ -49,6 +49,8 @@ interface RegPageProps {
     toggleTheme: () => void;
 }
 
+import { API_URL } from "../../api/api";
+
 function RegPage({ theme, toggleTheme }: RegPageProps) {
     const [formData, setFormData] = useState({ username: '', email: '', password: '', confirmPassword: '' });
     const [message, setMessage] = useState({ text: '', type: '' });
@@ -80,7 +82,8 @@ function RegPage({ theme, toggleTheme }: RegPageProps) {
             return;
         }
         try {
-            const res = await fetch("http://localhost:8000/auth/register", {
+            const base = API_URL.replace(/\/$/, '');
+            const res = await fetch(`${base}/auth/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, email, password }),

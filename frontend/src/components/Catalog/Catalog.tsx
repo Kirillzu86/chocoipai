@@ -1,161 +1,156 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { fetchCourses, API_URL } from "../../api/api";
+import { Link, useLocation } from "react-router-dom";
 import Header from "../Header/Header";
-import "../HomePage/StyleHomePage.css"; // Используем стили главной страницы
-import '../Sidebar/StyleSidebar.css';
-
-// Навигация
-const navItems = [
-    { title: 'Мой кабинет', icon: '👤', path: '/' },
-    { title: 'Курсы', icon: '📚', path: '/catalog', special: true } // Выделим "Курсы"
-];
+import "../HomePage/StyleHomePage.css";
+import "../Sidebar/StyleSidebar.css";
 
 interface Course {
-    id: number;
-    title: string;
-    description: string;
-    rating: number;
-    students_count: number;
-    price_status: string;
-    total_lessons: number;
-    completed_lessons: number;
-    progress_percentage: number;
+  id: number;
+  title: string;
+  description: string;
+  rating?: number;
+  students_count?: number;
+  price_status?: string;
+  total_lessons?: number;
+  completed_lessons?: number;
+  progress_percentage?: number;
 }
 
-// Карточка курса (такая же, как на главной)
 function CourseCard({ course }: { course: Course }) {
   return (
     <Link to={`/course/${course.id}`} className="course-card">
       <h3 className="card-title">{course.title}</h3>
       <p className="card-description">{course.description}</p>
-
       <div className="card-meta">
-        <span>⭐ {course.rating.toFixed(1)}</span>
-        <span>👤 {course.students_count.toLocaleString()}</span>
-        <span className={`price-status ${course.price_status.toLowerCase()}`}>{course.price_status}</span>
+        <span>⭐ {Number(course.rating || 0).toFixed(1)}</span>
+        <span>👤 {(course.students_count || 0).toLocaleString()}</span>
+        <span className={`price-status ${String((course.price_status || "")).toLowerCase()}`}>{course.price_status}</span>
       </div>
+      {typeof course.progress_percentage === "number" && (
+        <>
+          <div className="card-progress">
+            <div style={{ width: `${course.progress_percentage}%` }} className="progress-bar" />
+          </div>
+          <div className="progress-text">{course.progress_percentage.toFixed(0)}% пройдено</div>
+        </>
+      )}
     </Link>
   );
 }
 
-interface CatalogProps {
-  theme: "dark" | "light";
-  toggleTheme: () => void;
-}
+const navItems = [
+  { title: "Мой кабинет", icon: "👤", path: "/" },
+  { title: "Курсы", icon: "📚", path: "/catalog", special: true },
+];
 
-function Catalog({ theme, toggleTheme }: CatalogProps) {
+export default function Catalog({ theme, toggleTheme }: { theme: "dark" | "light"; toggleTheme: () => void }) {
   const [courses, setCourses] = useState<Course[]>([]);
+  const [displayedCourses, setDisplayedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<{ id: number; username: string; email: string } | null>(null);
-  const isDarkTheme = theme === "dark";
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedTerm, setDebouncedTerm] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [myCourseIds, setMyCourseIds] = useState<Set<number>>(new Set());
 
-  const handleLogout = () => {
-    localStorage.removeItem("currentUser");
-    setCurrentUser(null);
-    navigate('/catalog'); // Перенаправляем для обновления
-  };
+  const isDark = theme === "dark";
+  const location = useLocation();
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const load = async () => {
       try {
-        const timestamp = new Date().getTime();
-        const config = {
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0',
-            },
-        };
-        const coursesPromise = axios.get<Course[]>(`http://localhost:8000/api/v1/courses?_t=${timestamp}`, config);
-        
-        // Проверяем пользователя, чтобы узнать, на какие курсы он записан
-        const userStr = localStorage.getItem("currentUser");
-        const user = userStr ? JSON.parse(userStr) : null;
-        setCurrentUser(user); // Устанавливаем пользователя для сайдбара
-        
-        let myCoursesPromise = Promise.resolve({ data: [] as Course[] });
+        const ts = Date.now();
+        const base = API_URL.replace(/\/$/, "");
+        const all = await fetchCourses(undefined, ts).catch(() => axios.get(`${base}/api/v1/courses?_t=${ts}`, { timeout: 8000 }).then(r => r.data));
+
+        const userRaw = localStorage.getItem("currentUser");
+        const user = userRaw ? JSON.parse(userRaw) : null;
+        let myIds = new Set<number>();
         if (user && user.id) {
-             myCoursesPromise = axios.get<Course[]>(
-                `http://localhost:8000/api/v1/users/${user.id}/courses?_t=${timestamp}`,
-                config
-            );
+          const resp = await axios.get(`${base}/api/v1/users/${user.id}/courses?_t=${ts}`, { timeout: 8000 }).catch(() => ({ data: [] }));
+          myIds = new Set((resp.data || []).map((c: any) => c.id));
         }
 
-        const [coursesResponse, myCoursesResponse] = await Promise.all([coursesPromise, myCoursesPromise]);
-        
-        const myCourseIds = new Set(myCoursesResponse.data.map(c => c.id));
-
-        // Обновляем статус курсов на "Enrolled", если они есть у пользователя
-        const updatedCourses = coursesResponse.data.map(course => ({
-            ...course,
-            price_status: myCourseIds.has(course.id) ? "Enrolled" : course.price_status
-        }));
-
-        setCourses(updatedCourses);
-      } catch (err) {
-        console.error("Ошибка загрузки курсов:", err);
-        setError("Не удалось загрузить каталог.");
+        setMyCourseIds(myIds);
+        const withStatus = (all as Course[]).map(c => ({ ...c, price_status: myIds.has(c.id) ? "Enrolled" : c.price_status }));
+        setCourses(withStatus);
+        setDisplayedCourses(withStatus);
+      } catch (e: any) {
+        setError(String(e?.message || e));
       } finally {
         setLoading(false);
       }
     };
-    fetchCourses();
+    load();
   }, [location]);
 
-  const backgroundStyle: React.CSSProperties = {
-    minHeight: "100vh",
-    backgroundColor: isDarkTheme ? "#030712" : "#f8fafc",
-    backgroundImage: isDarkTheme
-      ? "radial-gradient(circle at 50% 0%, #3b82f640, #030712 35%)"
-      : "radial-gradient(circle at 50% 0%, #e2e8f040, #f8fafc 35%)",
-  };
+  useEffect(() => { const t = setTimeout(() => setDebouncedTerm(searchTerm), 300); return () => clearTimeout(t); }, [searchTerm]);
+
+  useEffect(() => {
+    if (debouncedTerm == null) return;
+    const doSearch = async () => {
+      const term = debouncedTerm.trim();
+      if (!term) { setDisplayedCourses(courses); setSearchLoading(false); return; }
+
+      const client = courses.filter(c => (c.title + " " + (c.description || "")).toLowerCase().includes(term.toLowerCase()) || String(c.id).includes(term));
+      setDisplayedCourses(client);
+      setSearchLoading(true);
+
+      try {
+        const ts = Date.now();
+        const base = API_URL.replace(/\/$/, "");
+        const server = await fetchCourses(term, ts).catch(() => axios.get(`${base}/api/v1/courses?q=${encodeURIComponent(term)}&_t=${ts}`, { timeout: 8000 }).then(r => r.data));
+        const seen = new Set<number>();
+        const unique: Course[] = [];
+        for (const it of (server as Course[])) {
+          if (!seen.has(it.id)) { seen.add(it.id); unique.push(it); }
+        }
+        setDisplayedCourses(unique);
+      } catch (e) {
+        console.warn('Server search failed, using client results', e);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+    doSearch();
+  }, [debouncedTerm, courses]);
+
+  const bg: React.CSSProperties = { minHeight: '100vh', backgroundColor: isDark ? '#030712' : '#f8fafc' };
 
   return (
-    <div style={backgroundStyle}>
+    <div style={bg}>
       <div className="app-main-view">
         <Header />
-
         <div className="app-layout">
-          {/* Сайдбар */}
           <nav className="sidebar-container">
-              {navItems.map((item, index) => (
-                  <Link to={item.path} key={index} className={`nav-item ${item.special ? 'nav-item-special' : ''}`}>
-                      <span className="nav-icon">{item.icon}</span>
-                      {item.title}
-                  </Link>
-              ))}
-              <div className="nav-separator"></div>
-              <div className="sidebar-auth-links">
-                  {currentUser ? (
-                      <>
-                          <span className="auth-link-user">👤 {currentUser.username}</span>
-                          <button onClick={handleLogout} className="auth-link-button">Выход</button>
-                      </>
-                  ) : (
-                      <Link to="/login" className="auth-link">Вход / Регистрация</Link>
-                  )}
-              </div>
+            {navItems.map((n, i) => (
+              <Link to={n.path} key={i} className={`nav-item ${n.special ? 'nav-item-special' : ''}`}>
+                <span className="nav-icon">{n.icon}</span>
+                {n.title}
+              </Link>
+            ))}
+            <div className="nav-separator" />
           </nav>
 
-          <div className="content-area" style={{ overflowY: "auto", maxHeight: "calc(100vh - 60px)" }}>
+          <div className="content-area">
             <div className="content-header">
               <h1 className="main-title">Каталог курсов</h1>
-              <button className="theme-toggle-btn" onClick={toggleTheme} />
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input placeholder="Поиск курсов по названию или описанию" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ padding: '8px 12px', borderRadius: 6, border: '1px solid #ccc' }} />
+                <button className="theme-toggle-btn" onClick={toggleTheme} />
+              </div>
             </div>
 
             {loading && <div className="loading-state">Загрузка каталога...</div>}
             {error && <div className="error-state">{error}</div>}
 
             {!loading && !error && (
-              <div className="course-list">
-                {courses.map((course) => (
-                  <CourseCard key={course.id} course={course} />
-                ))}
-              </div>
+              <>
+                {searchLoading && <div className="loading-state">Поиск...</div>}
+                <div className="course-list">{displayedCourses.map(c => <CourseCard key={c.id} course={c} />)}</div>
+              </>
             )}
           </div>
         </div>
@@ -163,5 +158,3 @@ function Catalog({ theme, toggleTheme }: CatalogProps) {
     </div>
   );
 }
-
-export default Catalog;

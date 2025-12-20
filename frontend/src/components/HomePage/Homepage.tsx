@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { API_URL } from "../../api/api";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Header from "../Header/Header"; // <-- ИМПОРТ HEADER
 import "./StyleHomePage.css"; 
@@ -107,50 +108,75 @@ function HomePage({ theme, toggleTheme }: HomePageProps) {
   // Логика загрузки данных
   useEffect(() => {
     const fetchData = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const timestamp = new Date().getTime();
-            const config = {
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0',
-                },
-            };
+      setLoading(true);
+      setError(null);
+      try {
+        const timestamp = new Date().getTime();
+        const config = {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        };
 
-            const userStr = localStorage.getItem("currentUser");
-            const user = userStr ? JSON.parse(userStr) : null;
+        const userStr = localStorage.getItem("currentUser");
+        const user = userStr ? JSON.parse(userStr) : null;
 
-            if (user && user.id) {
-                setCurrentUser(user);
-                // Если пользователь вошел, загружаем ТОЛЬКО его курсы
-                const myCoursesResponse = await axios.get<Course[]>(
-                    `http://localhost:8000/api/v1/users/${user.id}/courses?_t=${timestamp}`,
-                    config
-                );
-                
-                setAllCourses([]); // Очищаем список всех курсов, чтобы не мешал
-                console.log("Получены курсы пользователя:", myCoursesResponse.data); // ДИАГНОСТИКА
-                setMyCourses(myCoursesResponse.data);
-            } else {
-                setCurrentUser(null);
-                localStorage.removeItem("currentUser"); // На всякий случай
-                
-                // Если гость, загружаем ВСЕ курсы
-                const allCoursesResponse = await axios.get<Course[]>(
-                    `http://localhost:8000/api/v1/courses?_t=${timestamp}`, 
-                    config
-                );
-                setAllCourses(allCoursesResponse.data);
-                setMyCourses([]); // Убедимся, что курсы пользователя пусты
-            }
-        } catch (err) {
-            console.error("Ошибка загрузки данных:", err);
-            setError("Не удалось загрузить данные. Попробуйте перезагрузить страницу.");
-        } finally {
-            setLoading(false);
+        // Всегда загружаем полный список курсов
+        const base = API_URL.replace(/\/$/, '');
+        const allCoursesPromise = axios.get<Course[]>(`${base}/api/v1/courses?_t=${timestamp}`, config);
+
+        // По возможности параллельно загружаем курсы пользователя
+        let myCoursesPromise = Promise.resolve({ data: [] as Course[] });
+        if (user && user.id) {
+          myCoursesPromise = axios.get<Course[]>(`${base}/api/v1/users/${user.id}/courses?_t=${timestamp}`, config);
+          setCurrentUser(user);
+        } else {
+          setCurrentUser(null);
+          localStorage.removeItem("currentUser");
         }
+
+        const [allCoursesResponse, myCoursesResponse] = await Promise.all([allCoursesPromise, myCoursesPromise]);
+
+        // Устанавливаем оба состояния: полный каталог и курсы пользователя
+        const all = allCoursesResponse.data || [];
+        const my = myCoursesResponse.data || [];
+
+        // Попытка сопоставить прогресс из localStorage (если есть)
+        const userStrLocal = localStorage.getItem('currentUser');
+        let progMap: Record<string, any> = {};
+        if (userStrLocal) {
+          try {
+            const u = JSON.parse(userStrLocal);
+            progMap = u.enrolledProgress || {};
+          } catch (e) {
+            progMap = {};
+          }
+        }
+
+        const applyProgress = (courseList: Course[]) => courseList.map(c => {
+          const saved = progMap[String(c.id)];
+          if (saved && typeof saved.progress_percentage === 'number') {
+            return { ...c, progress_percentage: saved.progress_percentage };
+          }
+          // Попробуем вычислить по полям, если доступны
+          if (typeof c.completed_lessons === 'number' && typeof c.total_lessons === 'number' && c.total_lessons > 0) {
+            const pct = Math.round((c.completed_lessons / c.total_lessons) * 100);
+            return { ...c, progress_percentage: pct };
+          }
+          return c;
+        });
+
+        setAllCourses(applyProgress(all));
+        setMyCourses(applyProgress(my));
+        console.log("All courses:", all, "My courses:", my, "progressMap:", progMap);
+      } catch (err) {
+        console.error("Ошибка загрузки данных:", err);
+        setError("Не удалось загрузить данные. Попробуйте перезагрузить страницу.");
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
   }, [location, fetchTrigger]); // Добавляем fetchTrigger в зависимости
