@@ -126,6 +126,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost",
+        "http://127.0.0.1",
     ],  # Vite dev server
     allow_credentials=True,
     allow_methods=["*"],
@@ -262,11 +264,23 @@ def get_user_courses(user_id: int):
 
 
 @app.get("/api/v1/courses")
-def list_courses():
-    """Возвращает список всех курсов из БД."""
+def list_courses(q: str | None = None):
+    """Возвращает список курсов из БД.
+
+    Поддерживается опциональный параметр `q` — если передан, выполняется
+    поиск по `title` ИЛИ `description` (case-insensitive, через ILIKE).
+    """
     courses = []
     with get_cursor() as cur:
-        cur.execute("SELECT id, title, description FROM courses")
+        if q and q.strip():
+            pattern = f"%{q.strip()}%"
+            cur.execute(
+                "SELECT id, title, description FROM courses WHERE title ILIKE %s OR description ILIKE %s",
+                (pattern, pattern),
+            )
+        else:
+            cur.execute("SELECT id, title, description FROM courses")
+
         for row in cur.fetchall():
             # Временные заглушки для полей, которых пока нет в БД
             courses.append({
